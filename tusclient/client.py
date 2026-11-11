@@ -1,5 +1,7 @@
 from typing import Dict, Optional, Tuple, Union
 
+Timeout = Union[None, float, Tuple[float, float]]
+
 from tusclient.uploader import Uploader, AsyncUploader
 
 
@@ -21,16 +23,22 @@ class TusClient:
             key file. The PEM encoded key of the certificate can either be included in the
             certificate itself or be provided in a seperate file.
             Only unencrypted keys are supported!
+        - timeout (float|tuple[float,float]):
+            Timeout in seconds for every request made to the server, either a single
+            value or a (connect, read) tuple, with the same meaning as in `requests`.
+            Defaults to None, which waits indefinitely.
     :Constructor Args:
         - url (str)
         - headers (Optiional[dict])
         - client_cert (Optional[str | Tuple[str, str]])
+        - timeout (Optional[float | Tuple[float, float]])
     """
 
-    def __init__(self, url: str, headers: Optional[Dict[str, str]] = None, client_cert: Optional[Union[str, Tuple[str, str]]] = None):
+    def __init__(self, url: str, headers: Optional[Dict[str, str]] = None, client_cert: Optional[Union[str, Tuple[str, str]]] = None, timeout: Timeout = None):
         self.url = url
         self.headers = headers or {}
         self.client_cert = client_cert
+        self.timeout = timeout
 
     def set_headers(self, headers: Dict[str, str]):
         """

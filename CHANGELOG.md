@@ -1,3 +1,11 @@
+### 1.2.0 / 2026-11-11 (aerostacks-tuspy fork)
+
+- Published to the Aerostacks devpi as `aerostacks-tuspy`; the import name is still `tusclient`.
+- Add `TusClient(timeout=...)`: a seconds value or a `(connect, read)` tuple applied to every
+  request (create, HEAD offset, PATCH chunk), sync and async. Defaults to `None` (no timeout,
+  same as upstream). A stalled server now raises `TusCommunicationError` / `TusUploadFailed`
+  instead of blocking forever.
+
 ### 1.1.0 / 2024-11-29
 
 - Add support for specifying client certificates for TLS by @quality-leftovers in [#85](https://github.com/tus/tus-py-client/pulls/85)

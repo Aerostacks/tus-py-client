@@ -3,9 +3,9 @@ from setuptools import setup
 import tusclient
 
 setup(
-    name='tuspy',
+    name='aerostacks-tuspy',
     version=tusclient.__version__,
-    url='http://github.com/tus/tus-py-client/',
+    url='https://github.com/Aerostacks/tus-py-client/',
     license='MIT',
     author='Ifedapo Olarewaju',
     install_requires=[

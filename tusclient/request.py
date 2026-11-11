@@ -49,6 +49,8 @@ class BaseTusRequest:
         self.file = uploader.get_file_stream()
         self.file.seek(uploader.offset)
         self.client_cert = uploader.client_cert
+        self.timeout = uploader.timeout
+        self.aiohttp_timeout = uploader.aiohttp_timeout
 
         self._request_headers = {
             "upload-offset": str(uploader.offset),
@@ -94,7 +96,8 @@ class TusRequest(BaseTusRequest):
                 headers=headers,
                 verify=self.verify_tls_cert,
                 stream=True,
-                cert=self.client_cert
+                cert=self.client_cert,
+                timeout=self.timeout,
             )
             self.status_code = resp.status_code
             self.response_content = resp.content
@@ -127,7 +130,9 @@ class AsyncTusRequest(BaseTusRequest):
                 else:
                     ssl_ctx.load_cert_chain(certfile=self.client_cert[0], keyfile=self.client_cert[1])
             conn = aiohttp.TCPConnector(ssl=ssl_ctx)
-            async with aiohttp.ClientSession(loop=self.io_loop, connector=conn) as session:
+            async with aiohttp.ClientSession(
+                loop=self.io_loop, connector=conn, timeout=self.aiohttp_timeout
+            ) as session:
                 verify_tls_cert = None if self.verify_tls_cert else False
                 async with session.patch(
                     self._url, data=chunk, headers=self._request_headers, ssl=verify_tls_cert
@@ -137,5 +142,5 @@ class AsyncTusRequest(BaseTusRequest):
                         k.lower(): v for k, v in resp.headers.items()
                     }
                     self.response_content = await resp.content.read()
-        except aiohttp.ClientError as error:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
             raise TusUploadFailed(error)

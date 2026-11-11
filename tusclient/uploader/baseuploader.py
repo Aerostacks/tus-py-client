@@ -5,6 +5,7 @@ from base64 import b64encode
 from sys import maxsize as MAXSIZE
 import hashlib
 
+import aiohttp
 import requests
 
 from tusclient.exceptions import TusCommunicationError
@@ -193,6 +194,22 @@ class BaseUploader:
         """The client certificate used for the configured client"""
         return self.client.client_cert if self.client is not None else None
 
+    @property
+    def timeout(self):
+        """The request timeout used for the configured client"""
+        return getattr(self.client, "timeout", None)
+
+    @property
+    def aiohttp_timeout(self):
+        """The request timeout of the configured client, as an aiohttp.ClientTimeout"""
+        timeout = self.timeout
+        if timeout is None:
+            return aiohttp.ClientTimeout(total=None)
+        if isinstance(timeout, tuple):
+            connect, read = timeout
+            return aiohttp.ClientTimeout(total=None, sock_connect=connect, sock_read=read)
+        return aiohttp.ClientTimeout(total=None, sock_connect=timeout, sock_read=timeout)
+
     @catch_requests_error
     def get_offset(self):
         """
@@ -202,7 +219,8 @@ class BaseUploader:
         http request to the tus server to retrieve the offset.
         """
         resp = requests.head(
-            self.url, headers=self.get_headers(), verify=self.verify_tls_cert, cert=self.client_cert
+            self.url, headers=self.get_headers(), verify=self.verify_tls_cert, cert=self.client_cert,
+            timeout=self.timeout,
         )
         offset = resp.headers.get("upload-offset")
         if offset is None:

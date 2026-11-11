@@ -74,6 +74,7 @@ class Uploader(BaseUploader):
             headers=self.get_url_creation_headers(),
             verify=self.verify_tls_cert,
             cert=self.client_cert,
+            timeout=self.timeout,
         )
         url = resp.headers.get("location")
         if url is None:
@@ -162,7 +163,7 @@ class AsyncUploader(BaseUploader):
                 else:
                     ssl_ctx.load_cert_chain(certfile=self.client_cert[0], keyfile=self.client_cert[1])
             conn = aiohttp.TCPConnector(ssl=ssl_ctx)
-            async with aiohttp.ClientSession(connector=conn) as session:
+            async with aiohttp.ClientSession(connector=conn, timeout=self.aiohttp_timeout) as session:
                 headers = self.get_url_creation_headers()
                 verify_tls_cert = None if self.verify_tls_cert else False
                 async with session.post(
@@ -179,7 +180,7 @@ class AsyncUploader(BaseUploader):
                             msg, resp.status, await resp.content.read()
                         )
                     return urljoin(self.client.url, url)
-        except aiohttp.ClientError as error:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
             raise TusCommunicationError(error)
 
     async def _do_request(self):
